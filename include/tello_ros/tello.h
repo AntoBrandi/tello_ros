@@ -4,10 +4,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <optional>
+#include <vector>
 #include <experimental/optional>
 
-#include <ros/ros.h>
+#include <iostream>
 
 // This is the server running in Tello, where we send commands to and we
 // receive responses from
@@ -49,7 +49,6 @@ private:
     void FindTello();
     void ShowTelloInfo();
 
-private:
     int m_command_sockfd{0};
     int m_state_sockfd{0};
     int m_local_client_command_port{LOCAL_CLIENT_COMMAND_PORT};

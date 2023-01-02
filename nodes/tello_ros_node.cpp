@@ -1,17 +1,13 @@
-#include "tello_ros/tello.h"
+#include "tello_ros/tello_ros.h"
+#include <ros/ros.h>
 
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "tello_ros_node");
-    tello_ros::Tello tello;
-    if (!tello.Bind())
-    {
-        return 0;
-    }
+    ros::NodeHandle nh;
+    tello_ros::TelloROS tello(nh);
 
-    tello.SendCommand("takeoff");
-    tello.SendCommand("land");
     ros::spin();
 
     return 0;

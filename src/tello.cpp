@@ -136,7 +136,7 @@ bool Tello::Bind(const int local_client_command_port)
         ::BindSocketToPort(m_command_sockfd, local_client_command_port);
     if (!result.first)
     {
-        // ROS_ERROR(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
     m_local_client_command_port = local_client_command_port;
@@ -144,7 +144,7 @@ bool Tello::Bind(const int local_client_command_port)
                               &m_tello_server_command_addr);
     if (!result.first)
     {
-        // ROS_ERROR(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
@@ -152,14 +152,14 @@ bool Tello::Bind(const int local_client_command_port)
     result = ::BindSocketToPort(m_state_sockfd, LOCAL_SERVER_STATE_PORT);
     if (!result.first)
     {
-        // ROS_ERROR(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
 
     // Finding Tello
-    ROS_INFO("Finding Tello ...");
+    std::cerr << "Finding Tello ..." << std::endl;
     FindTello();
-    ROS_INFO("Entered SDK mode");
+    std::cerr << "Entered SDK mode" << std::endl;
 
     ShowTelloInfo();
 
@@ -182,22 +182,22 @@ void Tello::ShowTelloInfo()
     SendCommand("sn?");
     while (!(response = ReceiveResponse()))
         ;
-    ROS_INFO_STREAM("Serial Number: " << *response);
+    std::cerr << "Serial Number: " << *response << std::endl;
 
     SendCommand("sdk?");
     while (!(response = ReceiveResponse()))
         ;
-    ROS_INFO_STREAM("Tello SDK:     " << *response);
+    std::cerr << "Tello SDK:     " << *response << std::endl;
 
     SendCommand("wifi?");
     while (!(response = ReceiveResponse()))
         ;
-    ROS_INFO_STREAM("Wi-Fi Signal:  " << *response);
+    std::cerr << "Wi-Fi Signal:  " << *response << std::endl;
 
     SendCommand("battery?");
     while (!(response = ReceiveResponse()))
         ;
-    ROS_INFO_STREAM("Battery:       " << *response);
+    std::cerr << "Battery:       " << *response << std::endl;
 }
 
 bool Tello::SendCommand(const std::string& command)
@@ -209,12 +209,12 @@ bool Tello::SendCommand(const std::string& command)
     const int bytes{result.first};
     if (bytes == -1)
     {
-        // ROS_ERROR(result.second);
+        std::cerr << result.second << std::endl;
         return false;
     }
-    // ROS_DEBUG_STREAM("127.0.0.1:{} >>>> {} bytes >>>> {}:{}: {}",
-    //               m_local_client_command_port, bytes, TELLO_SERVER_IP,
-    //               TELLO_SERVER_COMMAND_PORT, command);
+    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
+                 ">>>> " << bytes << " bytes" << ">>>> " <<
+                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << command << std::endl;
     return true;
 }
 
@@ -232,9 +232,9 @@ std::experimental::optional<std::string> Tello::ReceiveResponse()
     std::string response{buffer.cbegin(), buffer.cbegin() + bytes};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    // ROS_DEBUG("127.0.0.1:{} <<<< {} bytes <<<< {}:{}: {}",
-    //               m_local_client_command_port, bytes, TELLO_SERVER_IP,
-    //               TELLO_SERVER_COMMAND_PORT, response);
+    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
+                 ">>>> " << bytes << " bytes" << ">>>> " <<
+                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << response << std::endl;
     return response;
 }
 
@@ -252,9 +252,9 @@ std::experimental::optional<std::string> Tello::GetState()
     std::string response{std::cbegin(buffer), std::cbegin(buffer) + bytes};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    // ROS_DEBUG("127.0.0.1:{} <<<< {} bytes <<<< {}:{}: <state>",
-    //               m_local_client_command_port, bytes, TELLO_SERVER_IP,
-    //               TELLO_SERVER_COMMAND_PORT);
+    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
+                 ">>>> " << bytes << " bytes" << ">>>> " <<
+                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << std::endl;
     return response;
 }
 }  // namespace tello_ros
