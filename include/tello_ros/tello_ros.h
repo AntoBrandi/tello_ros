@@ -27,6 +27,12 @@ private:
     ros::ServiceServer hover_srv_;
     ros::ServiceServer emergency_srv_;
     ros::Subscriber cmd_vel_sub_;
+    ros::Publisher imu_pub_;
+    ros::Publisher battery_pub_;
+    ros::Publisher temperature_pub_;
+    ros::Publisher height_pub_;
+    ros::Publisher barometer_pub_;
+    ros::Timer timer_;
 
     bool takeoffCallback(std_srvs::Empty::Request  &,
                          std_srvs::Empty::Response &);
@@ -53,6 +59,8 @@ private:
                            std_srvs::Empty::Response &);
 
     void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
+
+    void timerCallback(const ros::TimerEvent&);
 
 };
 }  // namespace tello_ros

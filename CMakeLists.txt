@@ -5,6 +5,7 @@ project(tello_ros)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_srvs
+  std_msgs
   geometry_msgs
 )
 

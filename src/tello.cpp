@@ -214,7 +214,8 @@ bool Tello::SendCommand(const std::string& command)
     }
     std::cerr << "127.0.0.1:" << m_local_client_command_port << 
                  ">>>> " << bytes << " bytes" << ">>>> " <<
-                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << command << std::endl;
+                 TELLO_SERVER_IP << ":" << TELLO_SERVER_COMMAND_PORT << 
+                 ">>>> " << command << std::endl;
     return true;
 }
 
@@ -234,12 +235,14 @@ std::experimental::optional<std::string> Tello::ReceiveResponse()
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
     std::cerr << "127.0.0.1:" << m_local_client_command_port << 
                  ">>>> " << bytes << " bytes" << ">>>> " <<
-                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << response << std::endl;
+                 TELLO_SERVER_IP << ":" << TELLO_SERVER_COMMAND_PORT << 
+                 ">>>> " << response << std::endl;
     return response;
 }
 
-std::experimental::optional<std::string> Tello::GetState()
+std::map<std::string,std::string> Tello::GetState()
 {
+    std::map<std::string,std::string> tello_stat;
     sockaddr_storage addr;
     const int size{1024};
     std::vector<unsigned char> buffer(size, '\0');
@@ -247,14 +250,25 @@ std::experimental::optional<std::string> Tello::GetState()
     const int bytes{result.first};
     if (bytes < 1)
     {
-        return {};
+        return tello_stat;
     }
     std::string response{std::cbegin(buffer), std::cbegin(buffer) + bytes};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
-                 ">>>> " << bytes << " bytes" << ">>>> " <<
-                 TELLO_SERVER_IP << TELLO_SERVER_COMMAND_PORT << std::endl;
-    return response;
+
+    if(!response.empty())
+    {
+        int start = 0, end1 = 0, end2 = 0;
+        while ((end1 = response.find(":", start)) != std::string::npos 
+            && (end2 = response.find(";", end1+1)) != std::string::npos) 
+        {
+            std::string key = response.substr(start, end1 - start);
+            std::string val = response.substr(end1 + 1, end2 - end1 - 1);
+            tello_stat.insert(std::pair<std::string,std::string>(key, val));
+            start = end2 + 1;
+        }
+    }
+
+    return tello_stat;
 }
 }  // namespace tello_ros

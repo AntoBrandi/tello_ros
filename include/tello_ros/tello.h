@@ -5,6 +5,7 @@
 #include <sys/types.h>
 
 #include <vector>
+#include <map>
 #include <experimental/optional>
 
 #include <iostream>
@@ -38,7 +39,7 @@ public:
     bool Bind(int local_client_command_port = LOCAL_CLIENT_COMMAND_PORT);
     bool SendCommand(const std::string& command);
     std::experimental::optional<std::string> ReceiveResponse();
-    std::experimental::optional<std::string> GetState();
+    std::map<std::string,std::string> GetState();
 
     Tello(const Tello&) = delete;
     Tello(const Tello&&) = delete;
