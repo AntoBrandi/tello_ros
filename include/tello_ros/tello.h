@@ -10,10 +10,15 @@
 
 #include <iostream>
 
+#include <opencv2/core.hpp>
+// #include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+
 // This is the server running in Tello, where we send commands to and we
 // receive responses from
 const char* const TELLO_SERVER_IP{"192.168.10.1"};
 const char* const TELLO_SERVER_COMMAND_PORT{"8889"};
+const char* const TELLO_STREAM_URL{"udp://0.0.0.0:11111"};
 
 // This is the local port where we bind our local UDP client to.
 //
@@ -39,7 +44,8 @@ public:
     bool Bind(int local_client_command_port = LOCAL_CLIENT_COMMAND_PORT);
     bool SendCommand(const std::string& command);
     std::experimental::optional<std::string> ReceiveResponse();
-    std::map<std::string,std::string> GetState();
+    void GetState(std::map<std::string,std::string>& tello_stat);
+    void GetFrame(cv::Mat& frame);
 
     Tello(const Tello&) = delete;
     Tello(const Tello&&) = delete;
@@ -54,6 +60,7 @@ private:
     int m_state_sockfd{0};
     int m_local_client_command_port{LOCAL_CLIENT_COMMAND_PORT};
     sockaddr_storage m_tello_server_command_addr{};
+    cv::VideoCapture capture_;
 };
 }  // namespace tello_ros
 #endif //TELLO_H

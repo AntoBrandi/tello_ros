@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/Twist.h>
+#include <image_transport/image_transport.h>
 #include "tello_ros/tello.h"
 
 
@@ -18,6 +19,8 @@ private:
     std::shared_ptr<Tello> tello_ptr_;
 
     ros::NodeHandle nh_;
+    image_transport::ImageTransport it_;
+    image_transport::Publisher camera_pub_;
     ros::ServiceServer takeoff_srv_;
     ros::ServiceServer land_srv_;
     ros::ServiceServer flip_r_srv_;
@@ -26,6 +29,8 @@ private:
     ros::ServiceServer flip_f_srv_;
     ros::ServiceServer hover_srv_;
     ros::ServiceServer emergency_srv_;
+    ros::ServiceServer enable_stream_srv_;
+    ros::ServiceServer disable_stream_srv_;
     ros::Subscriber cmd_vel_sub_;
     ros::Publisher imu_pub_;
     ros::Publisher battery_pub_;
@@ -33,6 +38,7 @@ private:
     ros::Publisher height_pub_;
     ros::Publisher barometer_pub_;
     ros::Timer timer_;
+    ros::Timer camera_timer_;
 
     bool takeoffCallback(std_srvs::Empty::Request  &,
                          std_srvs::Empty::Response &);
@@ -58,9 +64,17 @@ private:
     bool emergencyCallback(std_srvs::Empty::Request  &,
                            std_srvs::Empty::Response &);
 
+    bool enableStreamCallback(std_srvs::Empty::Request  &,
+                              std_srvs::Empty::Response &);
+
+    bool disableStreamCallback(std_srvs::Empty::Request  &,
+                               std_srvs::Empty::Response &);
+
     void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
     void timerCallback(const ros::TimerEvent&);
+
+    void cameraLoop(const ros::TimerEvent&);
 
 };
 }  // namespace tello_ros

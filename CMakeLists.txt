@@ -7,20 +7,32 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   std_msgs
   geometry_msgs
+  image_transport
+  cv_bridge
 )
+find_package(OpenCV REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
+    LIBRARIES 
+      ${PROJECT_NAME}
+    CATKIN_DEPENDS
+      std_srvs
+      std_msgs
+      geometry_msgs
+      image_transport
+      cv_bridge
 )
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 add_library(tello src/tello.cpp)
 add_dependencies(tello ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(tello ${catkin_LIBRARIES})
+target_link_libraries(tello ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_library(tello_ros src/tello_ros.cpp)
 add_dependencies(tello_ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

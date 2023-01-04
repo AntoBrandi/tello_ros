@@ -2,11 +2,14 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float32.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <cv_bridge/cv_bridge.h>
 
 
 namespace tello_ros
 {
-TelloROS::TelloROS(const ros::NodeHandle& nh) : nh_(nh)
+TelloROS::TelloROS(const ros::NodeHandle& nh) 
+    : nh_(nh)
+    , it_(nh)
 {
     tello_ptr_ = std::make_shared<Tello>();
     if (!tello_ptr_->Bind())
@@ -14,7 +17,7 @@ TelloROS::TelloROS(const ros::NodeHandle& nh) : nh_(nh)
         ROS_ERROR("Cannot connect to Tello");
     }
 
-
+    // ROS Interface
     takeoff_srv_ = nh_.advertiseService("takeoff", &TelloROS::takeoffCallback, this);
     land_srv_ = nh_.advertiseService("land", &TelloROS::landCallback, this);
     flip_r_srv_ = nh_.advertiseService("flip_r", &TelloROS::flipRCallback, this);
@@ -23,69 +26,107 @@ TelloROS::TelloROS(const ros::NodeHandle& nh) : nh_(nh)
     flip_b_srv_ = nh_.advertiseService("flip_b", &TelloROS::flipBCallback, this);
     hover_srv_ = nh_.advertiseService("hover", &TelloROS::hoverCallback, this);
     emergency_srv_ = nh_.advertiseService("emergency", &TelloROS::emergencyCallback, this);
+    enable_stream_srv_ = nh_.advertiseService("enable_stream", &TelloROS::enableStreamCallback, this);
+    disable_stream_srv_ = nh_.advertiseService("disable_stream", &TelloROS::disableStreamCallback, this);
     cmd_vel_sub_ = nh_.subscribe("cmd_vel", 1000, &TelloROS::cmdVelCallback, this);
     imu_pub_ = nh_.advertise<sensor_msgs::Imu>("imu", 1000);
     battery_pub_ = nh_.advertise<std_msgs::Float32>("battery", 1000);
     temperature_pub_ = nh_.advertise<std_msgs::Float32>("temperature", 1000);
     height_pub_ = nh_.advertise<std_msgs::Float32>("height", 1000);
     barometer_pub_ = nh_.advertise<std_msgs::Float32>("barometer", 1000);
+    camera_pub_ = it_.advertise("camera/image", 1);
     timer_ = nh_.createTimer(ros::Duration(0.1), &TelloROS::timerCallback, this);
+    camera_timer_ = nh_.createTimer(ros::Duration(0.033), &TelloROS::cameraLoop, this);
 }
 
 
 bool TelloROS::takeoffCallback(std_srvs::Empty::Request  &,
                                std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("takeoff");
+    tello_ptr_->SendCommand("takeoff");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::landCallback(std_srvs::Empty::Request  &,
                             std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("land");
+    tello_ptr_->SendCommand("land");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::flipRCallback(std_srvs::Empty::Request  &,
                              std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("flip r");
+    tello_ptr_->SendCommand("flip r");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::flipLCallback(std_srvs::Empty::Request  &,
                              std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("flip l");
+    tello_ptr_->SendCommand("flip l");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::flipFCallback(std_srvs::Empty::Request  &,
                              std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("flip f");
+    tello_ptr_->SendCommand("flip f");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::flipBCallback(std_srvs::Empty::Request  &,
                              std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("flip b");
+    tello_ptr_->SendCommand("flip b");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::hoverCallback(std_srvs::Empty::Request  &,
                              std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("stop");
+    tello_ptr_->SendCommand("stop");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
 bool TelloROS::emergencyCallback(std_srvs::Empty::Request  &,
                                  std_srvs::Empty::Response &)
 {
-    return tello_ptr_->SendCommand("emergency");
+    tello_ptr_->SendCommand("emergency");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
+}
+
+
+bool TelloROS::enableStreamCallback(std_srvs::Empty::Request  &,
+                                    std_srvs::Empty::Response &)
+{
+    tello_ptr_->SendCommand("streamon");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
+}
+
+
+bool TelloROS::disableStreamCallback(std_srvs::Empty::Request  &,
+                                    std_srvs::Empty::Response &)
+{
+    tello_ptr_->SendCommand("streamoff");
+    while (!(tello_ptr_->ReceiveResponse()));
+    return true;
 }
 
 
@@ -110,7 +151,8 @@ void TelloROS::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 void TelloROS::timerCallback(const ros::TimerEvent&)
 {
     // Create and Publish the IMU message
-    std::map<std::string,std::string> state = tello_ptr_->GetState();
+    std::map<std::string,std::string> state;
+    tello_ptr_->GetState(state);
     tf2::Quaternion orientation;
     orientation.setRPY(std::stod(state["roll"]), 
                        std::stod(state["pitch"]),
@@ -150,5 +192,21 @@ void TelloROS::timerCallback(const ros::TimerEvent&)
     barometer.data = std::stod(state["baro"]) / 100;
     barometer_pub_.publish(barometer);
     
+}
+
+
+void TelloROS::cameraLoop(const ros::TimerEvent&)
+{
+    cv::Mat frame;
+    tello_ptr_->GetFrame(frame);
+    if(frame.empty())
+    {
+        ROS_ERROR_STREAM("Empty Frame");
+    }
+    if(!frame.empty())
+    {
+        sensor_msgs::ImagePtr camera_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
+        camera_pub_.publish(camera_msg);
+    }
 }
 } // namespace tello_ros

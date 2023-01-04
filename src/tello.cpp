@@ -117,7 +117,7 @@ std::pair<int, std::string> ReceiveFrom(const int sockfd,
 
 namespace tello_ros
 {
-Tello::Tello()
+Tello::Tello() : capture_{TELLO_STREAM_URL, cv::CAP_FFMPEG}
 {
     m_command_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     m_state_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -240,9 +240,8 @@ std::experimental::optional<std::string> Tello::ReceiveResponse()
     return response;
 }
 
-std::map<std::string,std::string> Tello::GetState()
+void Tello::GetState(std::map<std::string,std::string>& tello_stat)
 {
-    std::map<std::string,std::string> tello_stat;
     sockaddr_storage addr;
     const int size{1024};
     std::vector<unsigned char> buffer(size, '\0');
@@ -250,7 +249,7 @@ std::map<std::string,std::string> Tello::GetState()
     const int bytes{result.first};
     if (bytes < 1)
     {
-        return tello_stat;
+        return;
     }
     std::string response{std::cbegin(buffer), std::cbegin(buffer) + bytes};
     // Some responses contain trailing white spaces.
@@ -268,7 +267,10 @@ std::map<std::string,std::string> Tello::GetState()
             start = end2 + 1;
         }
     }
+}
 
-    return tello_stat;
+void Tello::GetFrame(cv::Mat& frame)
+{
+    capture_ >> frame;
 }
 }  // namespace tello_ros
