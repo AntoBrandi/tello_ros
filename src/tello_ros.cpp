@@ -34,9 +34,25 @@ TelloROS::TelloROS(const ros::NodeHandle& nh)
     temperature_pub_ = nh_.advertise<std_msgs::Float32>("temperature", 1000);
     height_pub_ = nh_.advertise<std_msgs::Float32>("height", 1000);
     barometer_pub_ = nh_.advertise<std_msgs::Float32>("barometer", 1000);
-    camera_pub_ = it_.advertise("camera/image", 1);
+    camera_pub_ = it_.advertiseCamera("camera", 2);
     timer_ = nh_.createTimer(ros::Duration(0.1), &TelloROS::timerCallback, this);
-    camera_timer_ = nh_.createTimer(ros::Duration(0.033), &TelloROS::cameraLoop, this);
+    camera_timer_ = nh_.createTimer(ros::Duration(0.001), &TelloROS::cameraLoop, this, false, false);
+
+    // Init the camera info message
+    info_msg_.distortion_model = "plumb_bob";
+    info_msg_.height = TELLO_CAMERA_HEIGHT;
+    info_msg_.width = TELLO_CAMERA_WIDTH;
+    float focal = 0.5 * TELLO_CAMERA_WIDTH / tan(0.5 * TELLO_CAMERA_FOV);
+    info_msg_.K[0] = focal;
+    info_msg_.K[4] = focal;
+    info_msg_.K[2] = info_msg_.width * 0.5;
+    info_msg_.K[5] = info_msg_.height * 0.5;
+    info_msg_.K[8] = 1.;
+    info_msg_.P[0] = info_msg_.K[0];
+    info_msg_.P[5] = info_msg_.K[4];
+    info_msg_.P[2] = info_msg_.K[2];
+    info_msg_.P[6] = info_msg_.K[5];
+    info_msg_.P[10] = info_msg_.K[8];
 }
 
 
@@ -117,6 +133,8 @@ bool TelloROS::enableStreamCallback(std_srvs::Empty::Request  &,
 {
     tello_ptr_->SendCommand("streamon");
     while (!(tello_ptr_->ReceiveResponse()));
+    tello_ptr_->OpenStream();
+    camera_timer_.start();
     return true;
 }
 
@@ -126,6 +144,8 @@ bool TelloROS::disableStreamCallback(std_srvs::Empty::Request  &,
 {
     tello_ptr_->SendCommand("streamoff");
     while (!(tello_ptr_->ReceiveResponse()));
+    tello_ptr_->CloseStream();
+    camera_timer_.stop();
     return true;
 }
 
@@ -206,7 +226,9 @@ void TelloROS::cameraLoop(const ros::TimerEvent&)
     if(!frame.empty())
     {
         sensor_msgs::ImagePtr camera_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
-        camera_pub_.publish(camera_msg);
+        info_msg_.header = camera_msg->header;
+
+        camera_pub_.publish(*camera_msg, info_msg_);
     }
 }
 } // namespace tello_ros

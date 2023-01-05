@@ -11,7 +11,6 @@
 #include <iostream>
 
 #include <opencv2/core.hpp>
-// #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 
 // This is the server running in Tello, where we send commands to and we
@@ -19,6 +18,9 @@
 const char* const TELLO_SERVER_IP{"192.168.10.1"};
 const char* const TELLO_SERVER_COMMAND_PORT{"8889"};
 const char* const TELLO_STREAM_URL{"udp://0.0.0.0:11111"};
+const double TELLO_CAMERA_FOV{1.4409};
+const int TELLO_CAMERA_WIDTH{1280};
+const int TELLO_CAMERA_HEIGHT{720};
 
 // This is the local port where we bind our local UDP client to.
 //
@@ -46,6 +48,8 @@ public:
     std::experimental::optional<std::string> ReceiveResponse();
     void GetState(std::map<std::string,std::string>& tello_stat);
     void GetFrame(cv::Mat& frame);
+    void OpenStream();
+    void CloseStream();
 
     Tello(const Tello&) = delete;
     Tello(const Tello&&) = delete;

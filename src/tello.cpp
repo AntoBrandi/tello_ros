@@ -117,7 +117,7 @@ std::pair<int, std::string> ReceiveFrom(const int sockfd,
 
 namespace tello_ros
 {
-Tello::Tello() : capture_{TELLO_STREAM_URL, cv::CAP_FFMPEG}
+Tello::Tello()
 {
     m_command_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     m_state_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -269,8 +269,23 @@ void Tello::GetState(std::map<std::string,std::string>& tello_stat)
     }
 }
 
+void Tello::OpenStream()
+{
+    capture_.open(TELLO_STREAM_URL, cv::CAP_FFMPEG);
+    capture_.set(cv::CAP_PROP_FRAME_WIDTH, TELLO_CAMERA_WIDTH);
+    capture_.set(cv::CAP_PROP_FRAME_HEIGHT, TELLO_CAMERA_HEIGHT);
+}
+
+void Tello::CloseStream()
+{
+    capture_.release();
+}
+
 void Tello::GetFrame(cv::Mat& frame)
 {
-    capture_ >> frame;
+    if(capture_.isOpened())
+    {
+        capture_ >> frame;
+    }
 }
 }  // namespace tello_ros
