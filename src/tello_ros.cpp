@@ -53,6 +53,8 @@ TelloROS::TelloROS(const ros::NodeHandle& nh)
     info_msg_.P[2] = info_msg_.K[2];
     info_msg_.P[6] = info_msg_.K[5];
     info_msg_.P[10] = info_msg_.K[8];
+
+    enableStream();
 }
 
 
@@ -131,11 +133,17 @@ bool TelloROS::emergencyCallback(std_srvs::Empty::Request  &,
 bool TelloROS::enableStreamCallback(std_srvs::Empty::Request  &,
                                     std_srvs::Empty::Response &)
 {
+    enableStream();
+    return true;
+}
+
+
+void TelloROS::enableStream()
+{
     tello_ptr_->SendCommand("streamon");
     while (!(tello_ptr_->ReceiveResponse()));
     tello_ptr_->OpenStream();
     camera_timer_.start();
-    return true;
 }
 
 

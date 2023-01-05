@@ -1,0 +1,16 @@
+<launch>
+
+    <rosparam file="$(find tello_ros)/config/joystick.yaml" command="load" />
+
+    <node pkg="tello_ros" type="tello_ros_node" name="tello_ros_node" output="screen"/>
+    
+    <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop"/>
+  
+    <node pkg="joy" type="joy_node" name="joystick">
+      <param name="autorepeat_rate" value="20" />
+    </node>
+
+    <node pkg="rviz" name="rviz" type="rviz" 
+          args="-d $(find tello_ros)/rviz/remote_control.rviz"/>
+    
+</launch>

@@ -78,6 +78,8 @@ private:
 
     void cameraLoop(const ros::TimerEvent&);
 
+    void enableStream();
+
 };
 }  // namespace tello_ros
 #endif //TELLO_ROS_H

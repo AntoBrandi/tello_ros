@@ -1,0 +1,57 @@
+teleop:
+  move:
+    type: topic
+    message_type: geometry_msgs/Twist
+    topic_name: tello/cmd_vel
+    axis_mappings:
+      -
+        axis: 1
+        target: linear.x
+        scale: 100.0
+      -
+        axis: 0
+        target: linear.y
+        scale: -100.0
+      -
+        axis: 4
+        target: linear.z
+        scale: 100.0
+      -
+        axis: 3
+        target: angular.z
+        scale: -100.0
+
+  takeoff:
+    type: service
+    service_name: /tello/takeoff
+    buttons: [2]
+
+  land:
+    type: service
+    service_name: /tello/land
+    buttons: [1]
+  
+  emergency:
+    type: service
+    service_name: /tello/emergency
+    buttons: [8]
+
+  front_flip:
+    type: service
+    service_name: /tello/flip_f
+    buttons: [7]
+
+  back_flip:
+    type: service
+    service_name: /tello/flip_b
+    buttons: [6]
+
+  right_flip:
+    type: service
+    service_name: /tello/flip_r
+    buttons: [5]
+  
+  left_flip:
+    type: service
+    service_name: /tello/flip_l
+    buttons: [4]
