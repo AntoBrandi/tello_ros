@@ -36,7 +36,7 @@ TelloROS::TelloROS(const ros::NodeHandle& nh)
     barometer_pub_ = nh_.advertise<std_msgs::Float32>("barometer", 1000);
     camera_pub_ = it_.advertiseCamera("camera", 2);
     timer_ = nh_.createTimer(ros::Duration(0.1), &TelloROS::timerCallback, this);
-    camera_timer_ = nh_.createTimer(ros::Duration(0.001), &TelloROS::cameraLoop, this, false, false);
+    camera_timer_ = nh_.createTimer(ros::Duration(0.0001), &TelloROS::cameraLoop, this, false, false);
 
     // Init the camera info message
     info_msg_.distortion_model = "plumb_bob";
@@ -173,45 +173,69 @@ void TelloROS::timerCallback(const ros::TimerEvent&)
     // Create and Publish the IMU message
     std::map<std::string,std::string> state;
     tello_ptr_->GetState(state);
-    tf2::Quaternion orientation;
-    orientation.setRPY(std::stod(state["roll"]), 
-                       std::stod(state["pitch"]),
-                       std::stod(state["yaw"]));
-    sensor_msgs::Imu imu;
-    imu.header.frame_id = "imu";
-    imu.linear_acceleration.x = std::stod(state["agx"])/100;
-    imu.linear_acceleration.y = std::stod(state["agy"])/100;
-    imu.linear_acceleration.z = std::stod(state["agz"])/100;
-    imu.angular_velocity.x = std::stod(state["vgx"]);
-    imu.angular_velocity.y = std::stod(state["vgy"]);
-    imu.angular_velocity.z = std::stod(state["vgz"]);
-    imu.orientation.x = orientation.getX();
-    imu.orientation.y = orientation.getY();
-    imu.orientation.z = orientation.getZ();
-    imu.orientation.w = orientation.getW();
-    imu.header.stamp = ros::Time::now();
-    imu_pub_.publish(imu);
+    if(state.find("roll") != state.end() &&
+       state.find("pitch") != state.end() &&
+       state.find("yaw") != state.end() &&
+       state.find("agx") != state.end() &&
+       state.find("agy") != state.end() &&
+       state.find("agz") != state.end() &&
+       state.find("vgx") != state.end() &&
+       state.find("vgy") != state.end() &&
+       state.find("vgz") != state.end())
+    {
+        tf2::Quaternion orientation;
+        orientation.setRPY(std::stod(state["roll"]), 
+                        std::stod(state["pitch"]),
+                        std::stod(state["yaw"]));
+        sensor_msgs::Imu imu;
+        imu.header.frame_id = "imu";
+        imu.linear_acceleration.x = std::stod(state["agx"])/100;
+        imu.linear_acceleration.y = std::stod(state["agy"])/100;
+        imu.linear_acceleration.z = std::stod(state["agz"])/100;
+        imu.angular_velocity.x = std::stod(state["vgx"]);
+        imu.angular_velocity.y = std::stod(state["vgy"]);
+        imu.angular_velocity.z = std::stod(state["vgz"]);
+        imu.orientation.x = orientation.getX();
+        imu.orientation.y = orientation.getY();
+        imu.orientation.z = orientation.getZ();
+        imu.orientation.w = orientation.getW();
+        imu.header.stamp = ros::Time::now();
+        imu_pub_.publish(imu);
+    }
+    
 
     // Create and publish Battery
-    std_msgs::Float32 battery;
-    battery.data = std::stod(state["bat"]);
-    battery_pub_.publish(battery);
+    if(state.find("bat") != state.end())
+    {
+        std_msgs::Float32 battery;
+        battery.data = std::stod(state["bat"]);
+        battery_pub_.publish(battery);
+    }
 
     // Create and publish Temperature
-    std_msgs::Float32 temperature;
-    temperature.data = (std::stod(state["templ"]) + std::stod(state["temph"])) / 2;
-    temperature_pub_.publish(temperature);
+    if(state.find("templ") != state.end() && 
+       state.find("temph") != state.end())
+    {
+        std_msgs::Float32 temperature;
+        temperature.data = (std::stod(state["templ"]) + std::stod(state["temph"])) / 2;
+        temperature_pub_.publish(temperature);
+    }
 
     // Create and publish Height
-    std_msgs::Float32 height;
-    height.data = std::stod(state["h"]) / 100;
-    height_pub_.publish(height);
+    if(state.find("h") != state.end())
+    {
+        std_msgs::Float32 height;
+        height.data = std::stod(state["h"]) / 100;
+        height_pub_.publish(height);
+    }
 
     // Create and publish Barometer
-    std_msgs::Float32 barometer;
-    barometer.data = std::stod(state["baro"]) / 100;
-    barometer_pub_.publish(barometer);
-    
+    if(state.find("baro") != state.end())
+    {
+        std_msgs::Float32 barometer;
+        barometer.data = std::stod(state["baro"]) / 100;
+        barometer_pub_.publish(barometer); 
+    }
 }
 
 

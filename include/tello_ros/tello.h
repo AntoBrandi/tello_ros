@@ -19,8 +19,8 @@ const char* const TELLO_SERVER_IP{"192.168.10.1"};
 const char* const TELLO_SERVER_COMMAND_PORT{"8889"};
 const char* const TELLO_STREAM_URL{"udp://0.0.0.0:11111"};
 const double TELLO_CAMERA_FOV{1.4409};
-const int TELLO_CAMERA_WIDTH{1280};
-const int TELLO_CAMERA_HEIGHT{720};
+const int TELLO_CAMERA_WIDTH{640};
+const int TELLO_CAMERA_HEIGHT{480};
 
 // This is the local port where we bind our local UDP client to.
 //

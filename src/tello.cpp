@@ -14,7 +14,6 @@
 
 #include <sstream>
 
-const char* const LOG_PATTERN = "[%D %T] [ctello] [%^%l%$] %v";
 
 namespace
 {
@@ -212,10 +211,6 @@ bool Tello::SendCommand(const std::string& command)
         std::cerr << result.second << std::endl;
         return false;
     }
-    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
-                 ">>>> " << bytes << " bytes" << ">>>> " <<
-                 TELLO_SERVER_IP << ":" << TELLO_SERVER_COMMAND_PORT << 
-                 ">>>> " << command << std::endl;
     return true;
 }
 
@@ -233,10 +228,6 @@ std::experimental::optional<std::string> Tello::ReceiveResponse()
     std::string response{buffer.cbegin(), buffer.cbegin() + bytes};
     // Some responses contain trailing white spaces.
     response.erase(response.find_last_not_of(" \n\r\t") + 1);
-    std::cerr << "127.0.0.1:" << m_local_client_command_port << 
-                 ">>>> " << bytes << " bytes" << ">>>> " <<
-                 TELLO_SERVER_IP << ":" << TELLO_SERVER_COMMAND_PORT << 
-                 ">>>> " << response << std::endl;
     return response;
 }
 
